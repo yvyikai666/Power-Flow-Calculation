@@ -52,7 +52,7 @@ def g_delta(nn, mm):
     for i in range(nn - mm):
         delta_U2[i] = Us[i] ** 2 - (e[i] ** 2 + f[i] ** 2)
 
-    delta_PQU2 = []
+    delta_PQU2 = np.array([])
     for i in range(mm):
         delta_PQU2 = np.vstack(delta_PQU2, delta_P[i], delta_Q[i])
 
@@ -118,7 +118,6 @@ def jacobi(nn, mm):
             else:
                 S[i, j] = -2 * e[i]
 
-
     HN = np.hstack((H, N))
     JL = np.hstack((J, L))
     RS = np.hstack((R, S))
@@ -132,13 +131,13 @@ if __name__ == '__main__':
         """main loop"""
         i = 0
         delta_PQU2 = g_delta(n, m)
-        J = yakebi(n, m)
+        J = jacobi(n, m)
         inv_J = np.inv(J)
         delta_fe = np.dot(inv_J, delta_PQU2)
         f += delta_fe[::2]
         e += delta_fe[1::2]
-        error.append(max(delta_fe))
+        # error.append(max(delta_fe))
+        np.append(error, max(delta_fe))
         if error[i] <= epison:
             break
         i += 1
-
