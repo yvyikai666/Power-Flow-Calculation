@@ -6,6 +6,8 @@
 
 2022/10/13
 """
+# TODO: 最好要再加一个可以自动载入数据，生成节点导纳矩阵的函数
+# TODO: 暂时只测试了一个只有两个节点的网络，节点比较多的网络还有待测试
 
 import numpy as np
 
@@ -146,19 +148,17 @@ if __name__ == '__main__':
         # fe[:, :n] = fe[:, :n] - delta_fe
         z = np.zeros((2, 1))
         delta_fe = np.c_[delta_fe, z]
-        f = f - delta_fe[0, :]
+        f = f - np.reshape(delta_fe[:n], np.shape(f))
         # _ = e[:n].copy()
-        e = e - delta_fe[1, :]
+        e = e - np.reshape(delta_fe[n:], np.shape(f))
         # e[:n] = _
         # [f[:n], e[:n]] = [f[:n], e[:n]] - delta_fe
         # error.append(max(delta_fe))
         error = np.append(error, delta_fe.max())
-        print(i)
-        print(error)
-        print(f, e)
+        print(f'第{i + 1}次迭代')
+        print('error:', error[i])
+        print(f'f:{f}, e:{e}')
         if error[i] <= EPSILON:
             break
         i += 1
-
-
 
