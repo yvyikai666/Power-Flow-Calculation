@@ -13,13 +13,19 @@ import numpy as np
 
 """节点导纳矩阵"""
 # TODO: 可能要加一个生成节点导纳矩阵的函数，把那几个生成函数都放到其他文件里面
-Y = np.array([[2 - 4.j, -2. + 4.j],
+Y1 = np.array([[2 - 4.j, -2. + 4.j],
               [-2 + 4.j, 2 - 4.j]])
+
+# 输入Y是可以只输入上三角矩阵
+_ = np.triu(Y1, k=1)
+Y = Y1 + _.T
+
 
 """给定PQ节点PV节点的已知量"""
 Ps = np.array([-0.2])  # n-1
 Qs = np.array([-0.1])  # m-1
-Us = np.array([])  # n-m
+U1 = np.array([])  # n-m,可以直接输入复数形式的
+Us = np.array([np.abs(U1[i]) for i in range(len(U1))])
 
 """初始值"""
 e = np.array([1, 1])  # n
