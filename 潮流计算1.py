@@ -7,13 +7,14 @@ class PowerFlowCalculator:
     def __init__(self, Y, Ps, Qs, Us, f, e, epsilon=0.0001):
         """
         初始化
-        Y:节点导纳矩阵
+        以下除了epsilon都必须是ndarray类型
+        Y:节点导纳矩阵（可以只写上三角矩阵）
         Ps:有功的给定量
         Qs:无功给定量
         Us:电压给定量
         f:节点电压虚部
         e:节点电压实部
-        epsilon:精度
+        epsilon:精度（不写默认0.0001）
         """
         self.Ps = Ps
         self.Qs = Qs
@@ -35,22 +36,22 @@ class PowerFlowCalculator:
         for i in range(nn):
             self.delta_P[i] = self.Ps[i] - sum(
                 [self.e[i] * (self.G[i, j] * self.e[j] - self.B[i, j] * self.f[j]) + self.f[i] * (
-                            self.G[i, j] * self.f[j] + self.B[i, j] * self.e[j])
+                        self.G[i, j] * self.f[j] + self.B[i, j] * self.e[j])
                  for j in range(nn + 1)])
 
         for i in range(mm):
             # DONE 这里有问题
             self.delta_Q[i] = self.Qs[i] - sum(
                 [self.f[i] * (self.G[i, j] * self.e[j] - self.B[i, j] * self.f[j]) - self.e[i] * (
-                            self.G[i, j] * self.f[j] + self.B[i, j] * self.e[j])
+                        self.G[i, j] * self.f[j] + self.B[i, j] * self.e[j])
                  for j in range(mm + 1)])
 
         for i in range(nn - mm):
             self.delta_U2[i] = self.Us[i] ** 2 - (self.e[i] ** 2 + self.f[i] ** 2)
         try:
-            self.delta_PQU2 = np.vstack((self.delta_P.T, self.delta_Q.T, self.delta_U2.T))
+            self.delta_PQU2 = np.vstack((self.delta_P.reshape(-1, 1), self.delta_Q.reshape(-1, 1), self.delta_U2.reshape(-1, 1)))
         except:
-            self.delta_PQU2 = np.vstack((self.delta_P.T, self.delta_Q.T))
+            self.delta_PQU2 = np.vstack((self.delta_P.reshape(-1, 1), self.delta_Q.reshape(-1, 1)))
         # for i in range(mm):
         #     delta_PQU2 = np.vstack((delta_PQU2, delta_P[i], delta_Q[i]))
         #
@@ -58,7 +59,6 @@ class PowerFlowCalculator:
         #     delta_PQU2 = np.vstack((delta_PQU2, delta_P[i], delta_U2[i]))
 
         return self.delta_PQU2
-
 
     def jacobi(self, nn, mm):
         """生成雅克比矩阵"""
@@ -103,7 +103,7 @@ class PowerFlowCalculator:
                               sum([self.G[i, jj] * self.f[jj] + self.B[i, jj] * self.e[jj] for jj in range(nn + 1)])
 
         for i in range(nn - mm):
-            for j in (nn):
+            for j in range(nn):
                 if i != j:
                     R[i, j] = 0
                 else:
@@ -122,8 +122,8 @@ class PowerFlowCalculator:
         Ja = np.vstack((HN, JL, RS))
         return Ja
 
-
     def calculator(self):
+        """主计算函数"""
         error = np.array([])
         i = 0
         while True:
@@ -137,11 +137,11 @@ class PowerFlowCalculator:
             # DONE 这里有一点问题，其他似乎是已经没问题了
             # fe = np.vstack((f, e))
             # fe[:, :n] = fe[:, :n] - delta_fe
-            z = np.zeros((2, 1))
+            z = np.zeros((self.m + self.n + 1, 1))
             delta_fe = np.c_[delta_fe, z]
-            self.f = self.f - np.reshape(delta_fe[:self.n], np.shape(self.f))
+            self.f = self.f - np.reshape(delta_fe[:self.m], np.shape(self.f))
             # _ = e[:n].copy()
-            self.e = self.e - np.reshape(delta_fe[self.n:], np.shape(self.f))
+            self.e = self.e - np.reshape(delta_fe[self.m:], np.shape(self.f))
             # e[:n] = _
             # [f[:n], e[:n]] = [f[:n], e[:n]] - delta_fe
             # error.append(max(delta_fe))
